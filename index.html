@@ -1,0 +1,494 @@
+<!DOCTYPE html>
+<html lang="ms">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>Pintarkit Affiliate Selector</title>
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+
+    <!-- Canvas Confetti Library -->
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+
+    <style>
+        /* --- TEMA WARNA CUSTOM --- */
+        :root {
+            --bg-main: #FFF6DE;
+            --bg-sec: #F2E0AA;
+            --btn-color: #F4A417;
+            --btn-hover: #d68b0e;
+            --text-main: #1E1A1A;
+            --footer-bg: #623017;
+            --footer-text: #FFFFFF;
+        }
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            background-color: var(--bg-main);
+            color: var(--text-main);
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        /* --- LAYOUT FIXES --- */
+        header { z-index: 10; position: relative; }
+        main { position: relative; z-index: 20; }
+        .header-logo { pointer-events: none; display: flex; align-items: center; justify-content: center; }
+        .header-logo img { pointer-events: none; display: block; max-width: 140px; height: auto; }
+        
+        #global-loader.hidden, #result-overlay.hidden { pointer-events: none; visibility: hidden; }
+        #global-loader:not(.hidden), #result-overlay:not(.hidden) { pointer-events: auto; visibility: visible; }
+
+        /* --- BUTANG --- */
+        .btn-primary {
+            background-color: var(--btn-color);
+            color: var(--text-main);
+            transition: all 0.2s;
+            font-weight: 700;
+        }
+        .btn-primary:active { transform: scale(0.95); }
+        .btn-primary:hover { background-color: var(--btn-hover); }
+
+        /* --- KAD --- */
+        .card {
+            background-color: #FFFFFF;
+            border: 2px solid var(--bg-sec);
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+            border-radius: 1rem;
+        }
+
+        /* --- DIGITAL SHUFFLE BOX STYLES (NEW) --- */
+        .digital-box {
+            background: #2D2D2D;
+            border: 8px solid #F4A417;
+            border-radius: 15px;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.2), inset 0 0 20px rgba(0,0,0,0.5);
+            width: 100%;
+            max-width: 320px;
+            height: 180px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto;
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* Scanline effect */
+        .digital-box::after {
+            content: " ";
+            display: block;
+            position: absolute;
+            top: 0;
+            left: 0;
+            bottom: 0;
+            right: 0;
+            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06));
+            z-index: 2;
+            background-size: 100% 2px, 3px 100%;
+            pointer-events: none;
+        }
+
+        .shuffle-text {
+            font-family: 'Share Tech Mono', monospace; /* Font digital */
+            font-size: 3rem;
+            color: #4ADE80; /* Green LED color */
+            text-shadow: 0 0 10px rgba(74, 222, 128, 0.7);
+            z-index: 1;
+            text-align: center;
+            line-height: 1;
+        }
+
+        /* Animation for "Thinking" state */
+        .thinking .shuffle-text {
+            animation: pulseText 0.1s infinite;
+        }
+
+        @keyframes pulseText {
+            0% { opacity: 0.8; transform: scale(0.98); }
+            100% { opacity: 1; transform: scale(1.02); }
+        }
+
+        /* --- UTILITIES --- */
+        .hidden { display: none !important; }
+        .fade-in { animation: fadeIn 0.4s ease-in; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* Loader */
+        .loader {
+            border: 4px solid var(--bg-sec);
+            border-top: 4px solid var(--btn-color);
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+        .animate-bounce-in { animation: bounceIn 0.35s ease-out; }
+        @keyframes bounceIn {
+            0% { transform: scale(0.9); opacity: 0; }
+            60% { transform: scale(1.03); opacity: 1; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+    </style>
+</head>
+<body class="text-sm md:text-base">
+
+    <!-- HEADER -->
+    <header class="w-full p-4 flex justify-between items-center relative">
+        <div class="absolute left-1/2 transform -translate-x-1/2 top-4 header-logo">
+            <img src="https://i.postimg.cc/Nj2LV4kY/38186f61-54d4-4d05-a75e-29375e019f3f-removebg-preview.png" alt="Pintarkit Logo" class="h-16 md:h-20 object-contain">
+        </div>
+        <div class="ml-auto mt-2 cursor-pointer bg-white px-3 py-1 rounded-full border border-yellow-400 shadow-sm hover:bg-yellow-50 transition" onclick="toggleLanguage()">
+            <span id="lang-display" class="font-bold text-xs md:text-sm text-gray-800">BM 🇲🇾</span>
+        </div>
+    </header>
+
+    <!-- MAIN CONTENT -->
+    <main class="flex-grow flex flex-col items-center justify-center p-6 mt-12 w-full max-w-md mx-auto relative">
+
+        <!-- VIEW: HOME -->
+        <div id="view-home" class="w-full flex flex-col gap-4 fade-in">
+            <h2 class="text-center font-bold text-xl mb-2" data-key="choose_method">Pilih Cara Pembelian</h2>
+            <button onclick="switchView('search')" class="card p-6 flex flex-col items-center text-center gap-2 hover:bg-yellow-50 transition cursor-pointer w-full">
+                <div class="bg-orange-100 p-3 rounded-full text-2xl">🔍</div>
+                <h3 class="font-bold text-lg" data-key="opt_search_title">Cari ID Ejen</h3>
+                <p class="text-xs text-gray-600" data-key="opt_search_desc">Masukkan ID ejen yang anda kenali.</p>
+            </button>
+            <button onclick="switchView('random')" class="card p-6 flex flex-col items-center text-center gap-2 hover:bg-yellow-50 transition cursor-pointer w-full">
+                <div class="bg-orange-100 p-3 rounded-full text-2xl">🎲</div>
+                <h3 class="font-bold text-lg" data-key="opt_random_title">Pilih Secara Rawak</h3>
+                <p class="text-xs text-gray-600" data-key="opt_random_desc">Kami pilihkan ejen bertuah untuk anda.</p>
+            </button>
+            <div class="mt-6 p-4 bg-white/60 rounded-lg text-center border-l-4 border-[#F4A417]">
+                <p class="text-xs italic leading-relaxed" data-key="disclaimer">"Senarai affiliate yang dipaparkan adalah affiliate yang telah menjadi Pintarkit Members dan telah mengisi borang khas bagi mengikuti program Kongsi Rezeki bersama Pintarkit."</p>
+            </div>
+        </div>
+
+        <!-- VIEW: SEARCH -->
+        <div id="view-search" class="w-full hidden fade-in">
+            <button onclick="switchView('home')" class="mb-4 text-sm font-bold text-[#623017] flex items-center gap-1">&larr; <span data-key="back">Kembali</span></button>
+            <div class="card p-6 w-full text-center">
+                <h3 class="text-lg font-bold mb-4" data-key="enter_id">Masukkan ID Ejen yang anda kenali</h3>
+                <input type="text" id="agent-input" class="w-full p-3 border-2 border-[#F2E0AA] rounded-lg mb-4 text-center text-lg uppercase focus:outline-none focus:border-[#F4A417]" placeholder="Contoh: Cikgu_nim">
+                <p id="search-error" class="text-red-500 text-xs mb-3 hidden">ID tidak dijumpai.</p>
+                <button onclick="handleSearch()" id="search-btn" class="btn-primary w-full py-3 rounded-lg shadow-md uppercase tracking-wider"><span data-key="btn_search">Cari & Beli</span></button>
+            </div>
+        </div>
+
+        <!-- VIEW: DIGITAL SHUFFLE (GAYA BARU) -->
+        <div id="view-random" class="w-full hidden fade-in flex flex-col items-center">
+            <button onclick="switchView('home')" class="self-start mb-4 text-sm font-bold text-[#623017] flex items-center gap-1">&larr; <span data-key="back">Kembali</span></button>
+            <h3 class="text-lg font-bold mb-6 text-center" data-key="spin_title">Ejen Bertuah Digital</h3>
+            
+            <!-- DIGITAL BOX -->
+            <div class="digital-box" id="digital-box">
+                <div class="shuffle-text" id="shuffle-text">???</div>
+            </div>
+
+            <p class="text-xs text-gray-500 mt-4 mb-2">Klik butang di bawah untuk mula</p>
+
+            <button id="spin-btn" onclick="startDigitalShuffle()" class="btn-primary px-10 py-4 rounded-full shadow-lg text-lg font-bold uppercase tracking-wider transform transition hover:-translate-y-1 w-full max-w-xs">
+                <span data-key="btn_spin">MULA CABUTAN!</span>
+            </button>
+        </div>
+
+        <!-- RESULT MODAL -->
+        <div id="result-overlay" class="fixed inset-0 bg-black/50 z-50 hidden flex items-center justify-center p-4" role="dialog" aria-modal="true">
+            <div class="card w-full max-w-sm p-6 text-center relative animate-bounce-in">
+                <button onclick="closeResult()" class="absolute top-2 right-3 text-2xl text-gray-400">&times;</button>
+                <div class="w-16 h-16 bg-green-100 text-green-600 rounded-full flex items-center justify-center text-3xl mx-auto mb-4">✓</div>
+                <h3 class="text-xl font-bold mb-1" data-key="agent_found">Ejen Dijumpai!</h3>
+                <p class="text-sm text-gray-500 mb-4" data-key="please_support">Sila sokong ejen ini.</p>
+                <div class="bg-yellow-50 p-4 rounded-lg mb-6 border border-yellow-200">
+                    <p class="text-xs text-gray-500 mb-1">ID Ejen</p>
+                    <h2 id="result-id" class="text-3xl font-black text-[#623017]">PK-XXX</h2>
+                    <!-- PHONE REMOVED FOR PRIVACY -->
+                </div>
+                <a id="result-link" href="#" target="_blank" rel="noopener noreferrer" class="btn-primary w-full block py-3 rounded-lg shadow-md font-bold no-underline"><span data-key="btn_buy">Teruskan ke Pembayaran</span></a>
+            </div>
+        </div>
+
+        <!-- LOADER -->
+        <div id="global-loader" class="hidden fixed inset-0 bg-white/80 z-50 flex items-center justify-center">
+            <div class="loader"></div>
+        </div>
+
+    </main>
+
+    <!-- FOOTER -->
+    <footer class="w-full text-center py-6 px-4 mt-auto" style="background-color: var(--footer-bg); color: var(--footer-text);">
+        <p class="whitespace-nowrap overflow-x-auto text-xs opacity-90 leading-5">© 2025 Pintarkit. Hak Milik Terpelihara · Teknik LK Enterprise (001067425-T) · +60182787752</p>
+    </footer>
+
+    <!-- JAVASCRIPT -->
+    <script>
+    // --- CONFIG ---
+    const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzHfPkRdPm2d1k2syGek6ApxtQ6KwmUUPGv53aWEroNvGdYRBWZ13Rpk2Fvp2NaSZRx/exec';
+    const CLIENT_CACHE_KEY = 'pintarkit_agents_v1';
+    const CLIENT_CACHE_TS_KEY = 'pintarkit_agents_ts_v1';
+    const CLIENT_CACHE_TTL = 60 * 5; 
+
+    // State
+    let currentLang = 'bm';
+    let agents = [];
+    let isShuffling = false;
+    let lastRandomIndex = -1;
+
+    // Translations
+    const translations = {
+        bm: {
+            choose_method: "Pilih Cara Pembelian",
+            opt_search_title: "Cari ID Ejen",
+            opt_search_desc: "Masukkan ID ejen yang anda kenali.",
+            opt_random_title: "Pilih Secara Rawak",
+            opt_random_desc: "Kami pilihkan ejen bertuah untuk anda.",
+            disclaimer: "\"Senarai affiliate yang dipaparkan adalah affiliate yang telah menjadi Pintarkit Members dan telah mengisi borang khas bagi mengikuti program Kongsi Rezeki bersama Pintarkit.\"",
+            back: "Kembali",
+            enter_id: "Masukkan ID Ejen yang anda kenali",
+            btn_search: "Cari & Beli",
+            spin_title: "Ejen Bertuah Digital",
+            btn_spin: "MULA CABUTAN!",
+            agent_found: "Ejen Dijumpai!",
+            please_support: "Sila sokong ejen ini.",
+            btn_buy: "Teruskan ke Pembayaran",
+            rights: "Hak Milik Terpelihara",
+            lang_display: "BM 🇲🇾"
+        },
+        en: {
+            choose_method: "Choose Purchase Method",
+            opt_search_title: "Search Agent ID",
+            opt_search_desc: "Enter the Agent ID you know.",
+            opt_random_title: "Random Pick",
+            opt_random_desc: "We'll pick a lucky agent for you.",
+            disclaimer: "\"The displayed affiliate list consists of Pintarkit Members who have filled out a special form to join the Kongsi Rezeki program with Pintarkit.\"",
+            back: "Back",
+            enter_id: "Enter Agent ID you know",
+            btn_search: "Search & Buy",
+            spin_title: "Digital Lucky Agent",
+            btn_spin: "START DRAW!",
+            agent_found: "Agent Found!",
+            please_support: "Please support this agent.",
+            btn_buy: "Proceed to Payment",
+            rights: "All Rights Reserved",
+            lang_display: "EN 🇬🇧"
+        }
+    };
+
+    function nowSec() { return Math.floor(Date.now() / 1000); }
+    function updateTexts() {
+        const t = translations[currentLang] || translations.bm;
+        document.querySelectorAll('[data-key]').forEach(el => {
+            const key = el.getAttribute('data-key');
+            if (t[key]) el.innerText = t[key];
+        });
+        document.getElementById('lang-display').innerText = t.lang_display;
+    }
+    function toggleLanguage() {
+        currentLang = currentLang === 'bm' ? 'en' : 'bm';
+        updateTexts();
+    }
+
+    // --- NAVIGATION ---
+    function switchView(viewName) {
+        ['view-home', 'view-search', 'view-random'].forEach(id => {
+            const el = document.getElementById(id);
+            if (el) el.classList.add('hidden');
+        });
+        const target = document.getElementById(`view-${viewName}`);
+        if (target) target.classList.remove('hidden');
+
+        if (viewName === 'search') {
+            document.getElementById('agent-input').value = '';
+            document.getElementById('search-error').classList.add('hidden');
+        }
+        if (viewName === 'random') {
+             // UPDATE: Changed from "PK-???" to "???"
+             document.getElementById('shuffle-text').innerText = "???";
+             document.getElementById('digital-box').classList.remove('thinking');
+        }
+    }
+
+    // --- DATA HANDLING ---
+    function loadAgentsFromLocalCache() {
+        try {
+            const raw = localStorage.getItem(CLIENT_CACHE_KEY);
+            const ts = parseInt(localStorage.getItem(CLIENT_CACHE_TS_KEY) || '0', 10);
+            if (!raw || (nowSec() - ts) > CLIENT_CACHE_TTL) return null;
+            return JSON.parse(raw);
+        } catch(e) { return null; }
+    }
+    function saveAgentsToLocalCache(data) {
+        try {
+            localStorage.setItem(CLIENT_CACHE_KEY, JSON.stringify(data));
+            localStorage.setItem(CLIENT_CACHE_TS_KEY, String(nowSec()));
+        } catch(e) {}
+    }
+
+    async function fetchAgentsFromServer() {
+        try {
+            const resp = await fetch(SCRIPT_URL, { method: 'GET', cache: 'no-store' });
+            if (!resp.ok) throw new Error('HTTP ' + resp.status);
+            const data = await resp.json();
+            return Array.isArray(data) ? data.map(item => ({
+                id: String(item.id || '').toUpperCase(),
+                link: String(item.link || '#'),
+                phone: String(item.phone || '')
+            })) : null;
+        } catch (err) {
+            console.warn('JSON failed, trying JSONP', err);
+            return new Promise((resolve) => {
+                const cb = 'gs_cb_' + Date.now();
+                window[cb] = function(data) {
+                    delete window[cb];
+                    const s = document.getElementById(cb+'_s');
+                    if (s) s.remove();
+                    resolve(Array.isArray(data) ? data.map(i => ({
+                        id: String(i.id || '').toUpperCase(),
+                        link: String(i.link||'#'),
+                        phone: String(i.phone||'')
+                    })) : null);
+                };
+                const s = document.createElement('script');
+                s.id = cb+'_s';
+                s.src = SCRIPT_URL + (SCRIPT_URL.includes('?')?'&':'?') + 'callback=' + cb;
+                s.onerror = () => { delete window[cb]; s.remove(); resolve(null); };
+                document.body.appendChild(s);
+            });
+        }
+    }
+
+    async function loadAgentsWithCacheFlow() {
+        document.getElementById('global-loader').classList.remove('hidden');
+        
+        const cached = loadAgentsFromLocalCache();
+        if (cached && cached.length) {
+            agents = cached.slice();
+            applyAgentsToUI();
+        }
+
+        const fresh = await fetchAgentsFromServer();
+        if (fresh && fresh.length) {
+            agents = fresh.slice();
+            saveAgentsToLocalCache(agents);
+            applyAgentsToUI();
+        } else if (!cached || !cached.length) {
+            alert('Gagal memuat data ejen.');
+        }
+        document.getElementById('global-loader').classList.add('hidden');
+    }
+
+    function applyAgentsToUI() {
+        // Only enable spin button if we have data
+        const btn = document.getElementById('spin-btn');
+        if (agents.length > 0) {
+            btn.disabled = false;
+            btn.classList.remove('opacity-50');
+        }
+    }
+
+    // --- SEARCH ---
+    function handleSearch() {
+        const input = document.getElementById('agent-input').value.trim().toUpperCase();
+        const err = document.getElementById('search-error');
+        const found = agents.find(a => a.id === input);
+        if (found) {
+            err.classList.add('hidden');
+            showResult(found);
+        } else {
+            err.classList.remove('hidden');
+        }
+    }
+
+    // --- NEW: DIGITAL SHUFFLE LOGIC ---
+    function startDigitalShuffle() {
+        if (isShuffling || agents.length === 0) return;
+        isShuffling = true;
+        
+        const btn = document.getElementById('spin-btn');
+        btn.disabled = true;
+        btn.classList.add('opacity-50');
+        btn.innerText = "SEDANG MEMILIH...";
+
+        const box = document.getElementById('digital-box');
+        const textEl = document.getElementById('shuffle-text');
+        
+        box.classList.add('thinking'); // Adds pulse effect
+
+        // 1. Rapid Shuffle Effect
+        let shuffleCount = 0;
+        const maxShuffles = 40; // Total text changes
+        const intervalTime = 50; // Speed (ms)
+
+        const shuffleInterval = setInterval(() => {
+            // Pick random Agent ID purely for visual effect
+            const randomIndex = Math.floor(Math.random() * agents.length);
+            textEl.innerText = agents[randomIndex].id;
+            
+            shuffleCount++;
+            if (shuffleCount >= maxShuffles) {
+                clearInterval(shuffleInterval);
+                finalizeSelection();
+            }
+        }, intervalTime);
+
+        // 2. Determine Winner Logic
+        function finalizeSelection() {
+            // Pick FAIR winner
+            let winnerIndex;
+            if(agents.length > 1) {
+                do { winnerIndex = Math.floor(Math.random() * agents.length); } 
+                while (winnerIndex === lastRandomIndex);
+            } else { winnerIndex = 0; }
+            lastRandomIndex = winnerIndex;
+            
+            const winner = agents[winnerIndex];
+
+            // 3. Slow down effect before stopping (optional, keeping it snappy for now)
+            textEl.innerText = winner.id;
+            box.classList.remove('thinking');
+            
+            triggerConfetti();
+            
+            setTimeout(() => {
+                showResult(winner);
+                isShuffling = false;
+                btn.disabled = false;
+                btn.classList.remove('opacity-50');
+                btn.innerText = translations[currentLang].btn_spin; // Reset text
+            }, 600);
+        }
+    }
+
+    function showResult(agent) {
+        document.getElementById('result-id').innerText = agent.id;
+        // Phone display removed for privacy
+        document.getElementById('result-link').href = agent.link;
+        document.getElementById('result-overlay').classList.remove('hidden');
+    }
+    function closeResult() {
+        document.getElementById('result-overlay').classList.add('hidden');
+    }
+
+    function triggerConfetti() {
+        const d = 2000;
+        const end = Date.now() + d;
+        const opts = { startVelocity: 30, spread: 360, ticks: 60, zIndex: 80 };
+        const interval = setInterval(() => {
+            if (Date.now() > end) return clearInterval(interval);
+            confetti({ ...opts, particleCount: 40, origin: { x: Math.random(), y: Math.random() - 0.2 } });
+        }, 250);
+    }
+
+    // Init
+    window.onload = () => { updateTexts(); loadAgentsWithCacheFlow(); };
+    </script>
+</body>
+</html>
