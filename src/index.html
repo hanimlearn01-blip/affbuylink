@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="ms">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta name="description" content="Pintarkit Affiliate Selector - Cari ejen sah kami.">
+  <title>Pintarkit Affiliate Selector</title>
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+
+  <!-- CSS -->
+  <link rel="stylesheet" href="./styles.css">
+
+</head>
+<body>
+
+
+<body>
+
+    <header>
+        <div class="logo-container">
+            <img src="https://i.postimg.cc/15wkZP8H/PINTARKIT_LOGO.png" alt="Pintarkit" class="logo-img">
+        </div>
+        <div class="lang-btn" onclick="toggleLanguage()">
+            <span id="lang-display">BM 🇲🇾</span>
+        </div>
+    </header>
+
+    <main class="container">
+        
+        <!-- HOME VIEW -->
+       <div id="view-home">
+    <h2 class="text-center" style="margin-bottom: 0.5rem; font-weight: 700;">Sokong Usahawan Pintarkit</h2>
+    
+    <div style="background: #fff; padding: 15px; border-radius: 8px; font-size: 0.85rem; margin-bottom: 1.5rem; border: 1px solid #F2E0AA; box-shadow: 0 4px 6px rgba(0,0,0,0.02); text-align: center; color: #555; line-height: 1.6;">
+        <p>
+            Setiap pembelian anda menyumbang rezeki kepada <strong>Ahli Pintarkit Members</strong> yang berdaftar.
+        </p>
+        <p style="margin-top: 8px;">
+            Mereka adalah <span style="color: #d97706; font-weight: 600;">ketua keluarga, suri rumah, pendidik dan mahasiswa</span> yang sedang gigih berniaga demi menyara kehidupan.
+        </p>
+    </div>
+
+
+            <button onclick="switchView('search')" class="card card-btn">
+                <div class="icon-circle">🔍</div>
+                <h3 style="font-weight: 700;" data-key="opt_search_title">Cari ID Ejen</h3>
+                <p style="font-size: 0.8rem; color: #666;" data-key="opt_search_desc">Masukkan ID ahli yang anda kenali.</p>
+            </button>
+            
+            <button onclick="switchView('random')" class="card card-btn">
+                <div class="icon-circle">🎲</div>
+                <h3 style="font-weight: 700;" data-key="opt_random_title">Pilih Secara Rawak</h3>
+                <p style="font-size: 0.8rem; color: #666;" data-key="opt_random_desc">Kami pilihkan ahli bertuah untuk anda.</p>
+            </button>
+
+            <div style="margin-top: 2rem; padding-top: 1rem; border-top: 1px dashed #ccc; text-align: center;">
+                <p style="font-size: 0.8rem; font-weight: 700; color: #623017; margin-bottom: 5px;" data-key="member_cta_title">
+                    Nak nama anda tersenarai dalam sistem "Auto-Sales" ini?
+                </p>
+                <p style="font-size: 0.75rem; color: #666; margin-bottom: 10px;" data-key="member_cta_desc">
+                    Khas untuk pemegang <strong>Pintarkit Members</strong> sahaja.
+                </p>
+                
+                <a href="https://affiliate-pintarkit.netlify.app/" target="_blank" style="
+                    display: inline-block;
+                    background-color: #222; 
+                    color: #fff; 
+                    padding: 8px 16px; 
+                    border-radius: 20px; 
+                    font-size: 0.75rem; 
+                    text-decoration: none; 
+                    font-weight: bold;">
+                    <span data-key="member_cta_btn">Daftar Pintarkit Agent Sekarang &rarr;</span>
+                </a>
+            </div>
+        </div>
+
+        <!-- SEARCH VIEW -->
+        <div id="view-search" class="hidden">
+            <button onclick="switchView('home')" class="nav-back">← <span data-key="back">Kembali</span></button>
+            <div class="card text-center">
+                <h3 style="margin-bottom: 1rem;" data-key="opt_search_title">Cari ID Ejen</h3>
+                <input type="text" id="agent-input" placeholder="Contoh: CIKGU_NIM">
+                <p id="search-error" class="error-msg hidden" data-key="error_not_found">ID tidak dijumpai.</p>
+                <button onclick="handleSearch()" class="btn-primary" data-key="btn_search">Cari & Beli</button>
+            </div>
+        </div>
+
+        <!-- RANDOM VIEW -->
+        <div id="view-random" class="hidden text-center">
+            <button onclick="switchView('home')" class="nav-back">← <span data-key="back">Kembali</span></button>
+            <h3 style="margin-bottom: 1rem; font-weight: 700;" data-key="spin_title">Ejen Bertuah Digital</h3>
+            
+            <div class="digital-box" id="digital-box">
+                <div class="scanline"></div>
+                <div class="shuffle-text" id="shuffle-text">???</div>
+            </div>
+            
+            <p style="font-size: 0.8rem; color: #666; margin-bottom: 1rem;" data-key="click_to_start">Klik butang di bawah untuk mula</p>
+            
+            <button id="spin-btn" onclick="startDigitalShuffle()" class="btn-primary" style="border-radius: 50px; padding: 15px 40px; font-size: 1.2rem;">
+                <span data-key="btn_spin">MULA CABUTAN!</span>
+            </button>
+        </div>
+
+    </main>
+    <!-- RESULT MODAL -->
+    <div id="result-overlay" class="modal-overlay hidden">
+        <div class="modal-card">
+            <button onclick="closeResult()" class="close-modal">&times;</button>
+            <div class="success-icon">✓</div>
+            <h3 style="margin-bottom: 5px;" data-key="agent_found">Ejen Dijumpai!</h3>
+            <p style="font-size: 0.9rem; color: #666; margin-bottom: 1.5rem;" data-key="please_support">Sila sokong ejen ini.</p>
+            
+            <div style="background: var(--bg-main); padding: 1rem; border-radius: 8px; margin-bottom: 1.5rem;">
+                <p style="font-size: 0.75rem; color: #666;" data-key="agent_id_label">ID Ejen</p>
+                <h2 id="result-id" style="font-size: 2rem; font-weight: 900; color: var(--footer-bg); word-break: break-all;">PK-XXX</h2>
+            </div>
+            
+            <a id="result-link" href="#" target="_blank" class="btn-primary" style="display: block; text-decoration: none;" data-key="btn_buy">Teruskan ke Pembayaran</a>
+        </div>
+    </div>
+
+    <!-- GLOBAL LOADER -->
+    <div id="global-loader" class="loader-overlay hidden">
+        <div class="spinner"></div>
+    </div>
+
+  <!-- External Library -->
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+
+  <!-- App JS -->
+  <script src="./app.js" defer></script>
+</body>
+</html>
