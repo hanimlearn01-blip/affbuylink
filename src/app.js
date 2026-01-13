@@ -8,7 +8,7 @@
 
 // ---------- CONFIG ----------
 const CONFIG = {
-  DATA_URL: 'https://raw.githubusercontent.com/hanimlearn01-blip/affbuylink/main/data/agents.json',
+  DATA_URL: 'hhttps://raw.githubusercontent.com/hanimlearn01-blip/affbuylink/refs/heads/main/data/agents.json',
   CACHE_KEY: 'pintarkit_data_v3',
   CACHE_TIME: 1000 * 60 * 30 // 30 min
 };
